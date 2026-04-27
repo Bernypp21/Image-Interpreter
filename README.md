@@ -7,7 +7,10 @@ Arithmetics: Lit(int) | Add | Sub | Mul | Div | Neg|
 boolean Lit(bool) | And | Or | Not
 binding variables Let | Name
 eqaulity Eq 
-relation: Lf
+relation: Lf | If
+
+expresion = Add | Sub | Mul | Div | Neg | And | Not | Or| Eq | Lt | If | Lit | Let | Name | ImgComb | RotImage |
+
 
 
 Image specific extension: ImgComb | RotImage | Lit(filename) |
