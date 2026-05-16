@@ -5,11 +5,11 @@ import os
 from dataclasses import dataclass
 
 #defining the literal values
-type Value = int | Raster | bool
+type Value = int | Raster | bool | Closure
 
 #definig an expresion
 
-type Expr =  Add | Sub | Mul | Div | Neg | Lit | Let | Name | Or | Not | And | Eq | Lt | If | ImgComb | RotImag
+type Expr =  Add | Sub | Mul | Div | Neg | Lit | Let | Name | Or | Not | And | Eq | Lt | If | ImgComb | RotImag | LetFun | App
 
 
 @dataclass
@@ -128,6 +128,22 @@ class Lt():
     right : Expr
     def __str__(self) -> str:
         return f"({self.left} < {self.right})"
+#made changes and add the letfun and app fun
+@dataclass
+class LetFun():
+    name : str
+    param : str
+    bodyexpr : Expr
+    inexpr : Expr
+    def __str__(self) -> str:
+        return f"letfun {self.name} ({self.param}) = {self.bodyexpr} in {self.inexpr} end"
+
+@dataclass
+class App():
+    fun : Expr
+    arg : Expr
+    def __str__(self) -> str:
+        return f"({self.fun} ({self.arg}))"
 
 
 
@@ -173,6 +189,12 @@ def eqRaster(lv : Raster,rv :Raster) -> bool:
         return False
     return lv.img.tobytes() == rv.img.tobytes()
     
+@dataclass
+class Closure:
+    param : str
+    body : Expr
+    env : Env[Value]
+
 
 def eval(e : Expr) -> Value:
     return evalInEnv(emptyEnv,e)
@@ -301,6 +323,21 @@ def evalInEnv(env: Env[Value],e : Expr) -> Value:
                 rotated_image = rot.img.rotate(-90,expand=True)
                 return Raster(img=rotated_image)
             raise EvalError("Only allowed to do rotation on images")
+        
+        case LetFun(n,p,b,i):
+            c = Closure(p,b,env)
+            newEnv = extendEnv(n,c,env)
+            c.env = newEnv
+            return evalInEnv(newEnv,i)
+        case App(f,a):
+            fun = evalInEnv(env,f)
+            arg = evalInEnv(env,a)
+            match fun:
+                case Closure(p,b,cenv):
+                    newEnv = extendEnv(p,arg,cenv)
+                    return evalInEnv(newEnv,b)
+                case _:
+                    raise EvalError("application of non-function")
 
 def run(e : Expr) -> None:
     print(f"running {e}")

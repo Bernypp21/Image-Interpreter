@@ -1,0 +1,46 @@
+%import common.INT -> INT
+%import common.CNAME -> ID
+%import common.WS
+
+//Tells the lexer to discared whitespaces 
+%ignore WS
+
+?expr: "if" expr "then" expr "else" expr -> ite
+    | logical_or
+
+?logical_or : logical_or "||" logical_and -> or
+    | logical_and
+
+?logical_and : logical_and "&&" logical_not -> and
+            | logical_not
+
+?logical_not: "!" logical_not -> not
+            | compare_val
+
+?compare_val: compare_val "==" img_val -> eq
+            | compare_val "<" img_val -> lt
+            |  img_va;
+
+//img combination left precendence to
+?img_val: img_val "@" atom -> rotimag
+    |  img_val  "++" atom -> imgcomb
+    | addSub
+?addSub: addSub "+" mulDiv -> add
+        | addSub "-" mulDiv -> sub
+        | mulDiv
+
+?mulDiv: mulDiv "*" img_val -> mul
+        | mulDiv "/" img_val -> div
+        | neg_val
+
+?neg_val:  "-" neg_val -> neg
+        | atom
+
+
+?atom: ID                 -> id
+    | INT                 -> int
+    | atom "(" expr ")"   -> app
+    | "(" expr ")"
+    | "let"   ID "=" expr "in" expr "end  -> let
+    | "letfun" ID "(" ID ")" "=" expr "in" expr "end" ->letfun
+
